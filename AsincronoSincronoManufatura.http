@@ -1,0 +1,6 @@
+@AsincronoSincronoManufatura_HostAddress = http://localhost:5186
+
+GET {{AsincronoSincronoManufatura_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
