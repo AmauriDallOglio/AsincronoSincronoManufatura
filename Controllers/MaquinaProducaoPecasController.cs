@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AsincronoSincronoManufatura.Dto;
+using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
@@ -23,7 +24,7 @@ namespace AsincronoSincronoManufatura.Controllers
 
             // Medindo o tempo de corte da peça
             Stopwatch tempoCorte = Stopwatch.StartNew();
-            _maquinaProducao.CortarPeca();
+            _maquinaProducao.CortarMaterial();
             tempoCorte.Stop();
 
             // Medindo o tempo de montagem da peça
@@ -50,7 +51,7 @@ namespace AsincronoSincronoManufatura.Controllers
 
             // Medindo o tempo de corte e montagem da peça de forma assíncrona
             Stopwatch tempoCorte = Stopwatch.StartNew();
-            var tarefaCorte = _maquinaProducao.CortarPecaAsync();
+            var tarefaCorte = _maquinaProducao.CortarMaterialAsync();
             tempoCorte.Stop();
 
             Stopwatch tempoMontagem = Stopwatch.StartNew();
@@ -71,26 +72,5 @@ namespace AsincronoSincronoManufatura.Controllers
         }
     }
 
-    public class MaquinaProducao
-    {
-        public void CortarPeca()
-        {
-            Thread.Sleep(7000); // Simula o tempo para cortar uma peça
-        }
-
-        public void MontarPeca()
-        {
-            Thread.Sleep(8000); // Simula o tempo para montar uma peça
-        }
-
-        public async Task CortarPecaAsync()
-        {
-            await Task.Delay(7000); // Simula o tempo para cortar uma peça de forma assíncrona
-        }
-
-        public async Task MontarPecaAsync()
-        {
-            await Task.Delay(8000); // Simula o tempo para montar uma peça de forma assíncrona
-        }
-    }
+   
 }
