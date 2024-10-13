@@ -9,11 +9,11 @@ namespace AsincronoSincronoManufatura.Controllers
     [Route("api/[controller]")]
     public class MaquinaProducaoPecasController : ControllerBase
     {
-        private readonly MaquinaProducao _maquinaProducao;
+        private readonly EtapaProducaoDto _maquinaProducao;
 
         public MaquinaProducaoPecasController()
         {
-            _maquinaProducao = new MaquinaProducao();
+            _maquinaProducao = new EtapaProducaoDto();
         }
 
         [HttpGet("ProduzirPecaSincrono")]
@@ -24,12 +24,12 @@ namespace AsincronoSincronoManufatura.Controllers
 
             // Medindo o tempo de corte da peça
             Stopwatch tempoCorte = Stopwatch.StartNew();
-            _maquinaProducao.CortarMaterial();
+            _maquinaProducao.CortarMaterial(false);
             tempoCorte.Stop();
 
             // Medindo o tempo de montagem da peça
             Stopwatch tempoMontagem = Stopwatch.StartNew();
-            _maquinaProducao.MontarPeca();
+            _maquinaProducao.MontarPeca(false);
             tempoMontagem.Stop();
 
             stopwatch.Stop();
@@ -51,11 +51,11 @@ namespace AsincronoSincronoManufatura.Controllers
 
             // Medindo o tempo de corte e montagem da peça de forma assíncrona
             Stopwatch tempoCorte = Stopwatch.StartNew();
-            var tarefaCorte = _maquinaProducao.CortarMaterialAsync();
+            var tarefaCorte = _maquinaProducao.CortarMaterial(false);
             tempoCorte.Stop();
 
             Stopwatch tempoMontagem = Stopwatch.StartNew();
-            var tarefaMontagem = _maquinaProducao.MontarPecaAsync();
+            var tarefaMontagem = _maquinaProducao.MontarPeca(false);
             tempoMontagem.Stop();
 
             await Task.WhenAll(tarefaCorte, tarefaMontagem);

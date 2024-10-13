@@ -4,71 +4,83 @@ using System.Diagnostics;
 
 namespace AsincronoSincronoManufatura.Controllers
 {
- 
+
     [ApiController]
     [Route("api/[controller]")]
     public class PrepararCortarMontarPintarInspecionarController : ControllerBase
     {
-        private readonly MaquinaProducao _maquinaProducao;
+        private readonly EtapaProducaoDto _maquinaProducao;
 
         public PrepararCortarMontarPintarInspecionarController()
         {
-            _maquinaProducao = new MaquinaProducao();
+            _maquinaProducao = new EtapaProducaoDto();
         }
 
         [HttpGet("ProduzirPecaSincrono")]
         public IActionResult ProduzirPecaSincrono()
         {
+            Console.WriteLine("------ Inicio ---------");
+
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            Stopwatch tempoPreparar = Stopwatch.StartNew();
-            _maquinaProducao.PrepararMaterial();
-            tempoPreparar.Stop();
+            List<EtapaProducaoDto> listaEtapas = new List<EtapaProducaoDto>();
 
-            Stopwatch tempoCorte = Stopwatch.StartNew();
-            _maquinaProducao.CortarMaterial();
-            tempoCorte.Stop();
+            Task<EtapaProducaoDto> tarefaPreparar = _maquinaProducao.PrepararMaterial(false);
+            Task<EtapaProducaoDto> tarefaCorte =   _maquinaProducao.CortarMaterial(false);
+            Task<EtapaProducaoDto> tarefaMontagem = _maquinaProducao.MontarPeca(false);
+            Task<EtapaProducaoDto> tarefaPintura = _maquinaProducao.PintarPeca(false);
+            Task<EtapaProducaoDto> tarefaInspecao = _maquinaProducao.InspecionarQualidade(false);
 
-            Stopwatch tempoMontagem = Stopwatch.StartNew();
-            _maquinaProducao.MontarPeca();
-            tempoMontagem.Stop();
 
-            Stopwatch tempoPintura = Stopwatch.StartNew();
-            _maquinaProducao.PintarPeca();
-            tempoPintura.Stop();
+            listaEtapas.Add(tarefaPreparar.Result);
+            listaEtapas.Add(tarefaCorte.Result);
+            listaEtapas.Add(tarefaMontagem.Result);
+            listaEtapas.Add(tarefaPintura.Result);
+            listaEtapas.Add(tarefaInspecao.Result);
 
-            Stopwatch tempoInspecao = Stopwatch.StartNew();
-            _maquinaProducao.InspecionarQualidade();
-            tempoInspecao.Stop();
-
-            stopwatch.Stop();
             long tempoTotalMs = stopwatch.ElapsedMilliseconds;
 
             string resultado = $"Produção Síncrona:\n" +
-                                $"Tempo de Preparação do Material 5s: {tempoPreparar.ElapsedMilliseconds} ms\n" +
-                                $"Tempo de Corte do Material 7s: {tempoCorte.ElapsedMilliseconds} ms\n" +
-                                $"Tempo de Montagem da Peça 8s: {tempoMontagem.ElapsedMilliseconds} ms\n" +
-                                $"Tempo de Pintura da Peça 6s: {tempoPintura.ElapsedMilliseconds} ms\n" +
-                                $"Tempo de Inspeção de Qualidade 4s: {tempoInspecao.ElapsedMilliseconds} ms\n" +
+                                $"Tempo de Preparação do Material 5s: {tarefaPreparar.Result.TempoGastoMs} ms\n" +
+                                $"Tempo de Corte do Material 7s: {tarefaCorte} ms\n" +
+                                $"Tempo de Montagem da Peça 8s: {tarefaMontagem} ms\n" +
+                                $"Tempo de Pintura da Peça 6s: {tarefaPintura} ms\n" +
+                                $"Tempo de Inspeção de Qualidade 4s: {tarefaInspecao} ms\n" +
                                 $"Tempo Total de Produção 30s: {tempoTotalMs} ms";
 
-            return Ok(resultado);
+
+            Console.WriteLine("------ Fim ---------");
+
+            return Ok(listaEtapas);
+
         }
 
         [HttpGet("ProduzirPecaAssincrono")]
         public async Task<IActionResult> ProduzirPecaAssincrono()
         {
+            Console.WriteLine("------ Inicio ---------");
+
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var tarefaPreparar = _maquinaProducao.PrepararMaterialAsync();
-            var tarefaCorte = _maquinaProducao.CortarMaterialAsync();
-            var tarefaMontagem = _maquinaProducao.MontarPecaAsync();
-            var tarefaPintura = _maquinaProducao.PintarPecaAsync();
-            var tarefaInspecao = _maquinaProducao.InspecionarQualidadeAsync();
+            List<EtapaProducaoDto> listaEtapas = new List<EtapaProducaoDto>();
+
+            Task<EtapaProducaoDto> tarefaPreparar = _maquinaProducao.PrepararMaterial(true);
+            Task<EtapaProducaoDto> tarefaCorte =    _maquinaProducao.CortarMaterial(true);
+            Task<EtapaProducaoDto> tarefaMontagem = _maquinaProducao.MontarPeca(true);
+            Task<EtapaProducaoDto> tarefaPintura =  _maquinaProducao.PintarPeca(true);
+            Task<EtapaProducaoDto> tarefaInspecao = _maquinaProducao.InspecionarQualidade(true);
 
             await Task.WhenAll(tarefaPreparar, tarefaCorte, tarefaMontagem, tarefaPintura, tarefaInspecao);
+
+            listaEtapas.Add(tarefaPreparar.Result);
+            listaEtapas.Add(tarefaCorte.Result);
+            listaEtapas.Add(tarefaMontagem.Result);
+            listaEtapas.Add(tarefaPintura.Result);
+            listaEtapas.Add(tarefaInspecao.Result);
+ 
+
 
             stopwatch.Stop();
             long tempoTotalMs = stopwatch.ElapsedMilliseconds;
@@ -77,10 +89,47 @@ namespace AsincronoSincronoManufatura.Controllers
                                 $"Todas as etapas foram executadas de forma paralela.\n" +
                                 $"Tempo Total de Produção: {tempoTotalMs} ms";
 
+
+            Console.WriteLine("------ Fim ---------");
+
+            return Ok(listaEtapas);
+        }
+
+
+        [HttpGet("ProduzirPecaAssincrono2")]
+        public async Task<IActionResult> ProduzirPecaAssincrono2()
+        {
+
+            Console.WriteLine("------ Inicio ---------");
+
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            Task<EtapaProducaoDto> tarefaPreparar = _maquinaProducao.PrepararMaterial(true);
+            Task<EtapaProducaoDto> tarefaCorte =    _maquinaProducao.CortarMaterial(true);
+            Task<EtapaProducaoDto> tarefaMontagem = _maquinaProducao.MontarPeca(true);
+            Task<EtapaProducaoDto> tarefaPintura =  _maquinaProducao.PintarPeca(true);
+            Task<EtapaProducaoDto> tarefaInspecao = _maquinaProducao.InspecionarQualidade(true);
+
+
+
+
+
+            stopwatch.Stop();
+            long tempoTotalMs = stopwatch.ElapsedMilliseconds;
+
+            string resultado = $"Produção Assíncrona (em série):\n" +
+                               $"Tempo de Preparação do Material: {tarefaPreparar.Result} ms\n" +
+                               $"Tempo de Corte do Material: {tarefaCorte.Result} ms\n" +
+                               $"Tempo de Montagem da Peça: {tarefaMontagem.Result} ms\n" +
+                               $"Tempo de Pintura da Peça: {tarefaPintura.Result} ms\n" +
+                               $"Tempo de Inspeção de Qualidade: {tarefaInspecao.Result} ms\n" +
+                               $"Tempo Total de Produção: {tempoTotalMs} ms";
+
+            Console.WriteLine("------ Fim ---------");
+
             return Ok(resultado);
         }
+
     }
-
-   
 }
-
